@@ -1,0 +1,30 @@
+{
+	"name": "ultravisor-beacon",
+	"version": "0.0.1",
+	"description": "Ultravisor Beacon: lightweight beacon client and Fable service for remote task execution",
+	"main": "source/Ultravisor-Beacon-Service.cjs",
+	"scripts": {
+		"test": "npx mocha -u tdd --exit --timeout 10000 ./test/*_tests*",
+		"coverage": "npx nyc --reporter=lcov --reporter=text-summary npx mocha -- -u tdd --exit --timeout 10000 ./test/*_tests*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/stevenvelozo/ultravisor-beacon.git"
+	},
+	"keywords": [
+		"ultravisor",
+		"beacon",
+		"remote",
+		"task",
+		"orchestration",
+		"fable"
+	],
+	"author": "Steven Velozo <steven@velozo.com>",
+	"license": "MIT",
+	"dependencies": {
+		"fable-serviceproviderbase": "^3.0.0"
+	},
+	"devDependencies": {
+		"mocha": "^10.0.0"
+	}
+}

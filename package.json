@@ -22,9 +22,9 @@
 	"author": "Steven Velozo <steven@velozo.com>",
 	"license": "MIT",
 	"dependencies": {
-		"fable-serviceproviderbase": "^3.0.0"
+		"fable-serviceproviderbase": "^3.0.19"
 	},
 	"devDependencies": {
-		"mocha": "^10.0.0"
+		"quackage": "^1.0.65"
 	}
 }

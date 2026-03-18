@@ -29,6 +29,7 @@ const libFableServiceBase = require('fable-serviceproviderbase');
 const libBeaconClient = require('./Ultravisor-Beacon-Client.cjs');
 const libCapabilityManager = require('./Ultravisor-Beacon-CapabilityManager.cjs');
 const libConnectivityHTTP = require('./Ultravisor-Beacon-ConnectivityHTTP.cjs');
+const libConnectivityWebSocket = require('./Ultravisor-Beacon-ConnectivityWebSocket.cjs');
 
 class UltravisorBeaconService extends libFableServiceBase
 {
@@ -48,8 +49,7 @@ class UltravisorBeaconService extends libFableServiceBase
 			PollIntervalMs: 5000,
 			HeartbeatIntervalMs: 30000,
 			StagingPath: '',
-			Tags: {},
-			Transport: 'HTTP'
+			Tags: {}
 		}, this.options || {});
 
 		// Internal components
@@ -286,3 +286,4 @@ module.exports.CapabilityAdapter = require('./Ultravisor-Beacon-CapabilityAdapte
 module.exports.CapabilityProvider = require('./Ultravisor-Beacon-CapabilityProvider.cjs');
 module.exports.ProviderRegistry = require('./Ultravisor-Beacon-ProviderRegistry.cjs');
 module.exports.ConnectivityHTTP = libConnectivityHTTP;
+module.exports.ConnectivityWebSocket = libConnectivityWebSocket;

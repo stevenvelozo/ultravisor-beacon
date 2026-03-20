@@ -30,6 +30,7 @@ const libBeaconClient = require('./Ultravisor-Beacon-Client.cjs');
 const libCapabilityManager = require('./Ultravisor-Beacon-CapabilityManager.cjs');
 const libConnectivityHTTP = require('./Ultravisor-Beacon-ConnectivityHTTP.cjs');
 const libConnectivityWebSocket = require('./Ultravisor-Beacon-ConnectivityWebSocket.cjs');
+const libAddressResolver = require('./Ultravisor-Beacon-AddressResolver.cjs');
 
 class UltravisorBeaconService extends libFableServiceBase
 {
@@ -49,14 +50,19 @@ class UltravisorBeaconService extends libFableServiceBase
 			PollIntervalMs: 5000,
 			HeartbeatIntervalMs: 30000,
 			StagingPath: '',
-			Tags: {}
+			Tags: {},
+			Contexts: {}
 		}, this.options || {});
 
 		// Internal components
 		this._CapabilityManager = new libCapabilityManager();
 		this._ConnectivityService = new libConnectivityHTTP(this.options);
+		this._AddressResolver = new libAddressResolver();
 		this._ThinClient = null;
 		this._Enabled = false;
+
+		// Operation definitions to register with the coordinator on connect
+		this._Operations = [];
 	}
 
 	// ================================================================
@@ -95,6 +101,43 @@ class UltravisorBeaconService extends libFableServiceBase
 	}
 
 	/**
+	 * Register an operation definition to push to the coordinator on connect.
+	 *
+	 * Operation definitions use the same graph structure as HypervisorState
+	 * operations (Hash, Name, Description, Graph with Nodes and Connections).
+	 * These are sent during beacon registration and stored by the coordinator.
+	 *
+	 * @param {object} pOperationDef - Operation definition:
+	 *   {
+	 *     Hash: 'video-ingest',
+	 *     Name: 'Video Ingest Pipeline',
+	 *     Description: '...',
+	 *     Graph: { Nodes: [...], Connections: [...] }
+	 *   }
+	 * @returns {object} this (for chaining)
+	 */
+	registerOperation(pOperationDef)
+	{
+		if (!pOperationDef || typeof(pOperationDef) !== 'object')
+		{
+			if (this.log)
+			{
+				this.log.warn('UltravisorBeacon: registerOperation requires a valid object.');
+			}
+			return this;
+		}
+
+		this._Operations.push(pOperationDef);
+
+		if (this.log)
+		{
+			this.log.info(`UltravisorBeacon: registered operation [${pOperationDef.Hash || 'auto'}] "${pOperationDef.Name || ''}"`);
+		}
+
+		return this;
+	}
+
+	/**
 	 * Remove a previously registered capability.
 	 *
 	 * @param {string} pCapabilityName
@@ -114,6 +157,51 @@ class UltravisorBeaconService extends libFableServiceBase
 	getCapabilityNames()
 	{
 		return this._CapabilityManager.getCapabilityNames();
+	}
+
+	/**
+	 * Register a data context that this beacon exposes.
+	 *
+	 * Contexts define namespaces for the Universal Data Addressing scheme.
+	 * For example, a retold-remote beacon might expose a 'File' context
+	 * (content root) and a 'Cache' context (thumbnail cache).
+	 *
+	 * @param {string} pContextName - The context name (e.g. 'File', 'Cache', 'Staging').
+	 * @param {object} pContextDef - Context definition:
+	 *   {
+	 *     BasePath: '/absolute/path',     // Local filesystem path
+	 *     BaseURL: '/content/',           // URL prefix for remote access
+	 *     Writable: true,                 // Whether remote writes are allowed
+	 *     Description: 'Content root'     // Human-readable description
+	 *   }
+	 * @returns {object} this (for chaining)
+	 */
+	registerContext(pContextName, pContextDef)
+	{
+		this.options.Contexts[pContextName] = pContextDef;
+
+		// Also register with the address resolver for local resolution
+		if (pContextDef.BasePath)
+		{
+			this._AddressResolver.setLocalContextPath(pContextName, pContextDef.BasePath);
+		}
+
+		if (this.log)
+		{
+			this.log.info(`UltravisorBeacon: registered context [${pContextName}]`);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Get the address resolver instance.
+	 *
+	 * @returns {UltravisorBeaconAddressResolver}
+	 */
+	getAddressResolver()
+	{
+		return this._AddressResolver;
 	}
 
 	/**
@@ -163,6 +251,8 @@ class UltravisorBeaconService extends libFableServiceBase
 			MaxConcurrent: this.options.MaxConcurrent || 1,
 			StagingPath: this.options.StagingPath || process.cwd(),
 			Tags: this.options.Tags || {},
+			Contexts: this.options.Contexts || {},
+			Operations: this._Operations.length > 0 ? this._Operations : undefined,
 			// Pass empty Providers array — we'll register adapters directly
 			Providers: []
 		});
@@ -196,6 +286,7 @@ class UltravisorBeaconService extends libFableServiceBase
 			}
 
 			this._Enabled = true;
+			this._AddressResolver.setLocalBeaconID(pBeacon.BeaconID);
 
 			if (this.log)
 			{
@@ -285,5 +376,6 @@ module.exports.CapabilityManager = libCapabilityManager;
 module.exports.CapabilityAdapter = require('./Ultravisor-Beacon-CapabilityAdapter.cjs');
 module.exports.CapabilityProvider = require('./Ultravisor-Beacon-CapabilityProvider.cjs');
 module.exports.ProviderRegistry = require('./Ultravisor-Beacon-ProviderRegistry.cjs');
+module.exports.AddressResolver = libAddressResolver;
 module.exports.ConnectivityHTTP = libConnectivityHTTP;
 module.exports.ConnectivityWebSocket = libConnectivityWebSocket;

@@ -130,6 +130,42 @@ class UltravisorBeaconProviderRegistry
 	}
 
 	/**
+	 * Get serializable action schemas from all loaded providers.
+	 *
+	 * Collects action metadata (Description, SettingsSchema) from every
+	 * registered provider.  Handler functions are NOT included — the
+	 * CapabilityAdapter's `actions` getter already strips them.
+	 *
+	 * @returns {Array<{ Capability: string, Action: string, Description: string, SettingsSchema: Array }>}
+	 */
+	getActionSchemas()
+	{
+		let tmpSchemas = [];
+		let tmpProviderNames = Object.keys(this._Providers);
+
+		for (let i = 0; i < tmpProviderNames.length; i++)
+		{
+			let tmpProvider = this._Providers[tmpProviderNames[i]];
+			let tmpActions = tmpProvider.actions || {};
+			let tmpActionNames = Object.keys(tmpActions);
+
+			for (let j = 0; j < tmpActionNames.length; j++)
+			{
+				let tmpActionDef = tmpActions[tmpActionNames[j]];
+
+				tmpSchemas.push({
+					Capability: tmpProvider.Capability,
+					Action: tmpActionNames[j],
+					Description: tmpActionDef.Description || '',
+					SettingsSchema: tmpActionDef.SettingsSchema || []
+				});
+			}
+		}
+
+		return tmpSchemas;
+	}
+
+	/**
 	 * Get all loaded providers.
 	 *
 	 * @returns {object} Map of provider Name → instance

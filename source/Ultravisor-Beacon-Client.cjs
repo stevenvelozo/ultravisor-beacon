@@ -397,9 +397,22 @@ class UltravisorBeaconClient
 		let tmpBody = {
 			Name: this._Config.Name,
 			Capabilities: this._Executor.providerRegistry.getCapabilities(),
+			ActionSchemas: this._Executor.providerRegistry.getActionSchemas(),
 			MaxConcurrent: this._Config.MaxConcurrent,
 			Tags: this._Config.Tags
 		};
+
+		// Include contexts if any are defined
+		if (this._Config.Contexts && Object.keys(this._Config.Contexts).length > 0)
+		{
+			tmpBody.Contexts = this._Config.Contexts;
+		}
+
+		// Include operations if any are defined
+		if (Array.isArray(this._Config.Operations) && this._Config.Operations.length > 0)
+		{
+			tmpBody.Operations = this._Config.Operations;
+		}
 
 		this._httpRequest('POST', '/Beacon/Register', tmpBody, fCallback);
 	}
@@ -685,13 +698,23 @@ class UltravisorBeaconClient
 			console.log(`[Beacon] WebSocket connected to ${tmpWSURL}`);
 
 			// Register over WebSocket
-			this._wsSend({
+			let tmpWSRegPayload = {
 				Action: 'BeaconRegister',
 				Name: this._Config.Name,
 				Capabilities: this._Executor.providerRegistry.getCapabilities(),
+				ActionSchemas: this._Executor.providerRegistry.getActionSchemas(),
 				MaxConcurrent: this._Config.MaxConcurrent,
 				Tags: this._Config.Tags
-			});
+			};
+			if (this._Config.Contexts && Object.keys(this._Config.Contexts).length > 0)
+			{
+				tmpWSRegPayload.Contexts = this._Config.Contexts;
+			}
+			if (Array.isArray(this._Config.Operations) && this._Config.Operations.length > 0)
+			{
+				tmpWSRegPayload.Operations = this._Config.Operations;
+			}
+			this._wsSend(tmpWSRegPayload);
 		});
 
 		this._WebSocket.on('message', (pMessage) =>

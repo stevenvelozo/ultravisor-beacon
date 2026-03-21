@@ -1,6 +1,6 @@
 {
 	"name": "ultravisor-beacon",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "Ultravisor Beacon: lightweight beacon client and Fable service for remote task execution",
 	"main": "source/Ultravisor-Beacon-Service.cjs",
 	"scripts": {
@@ -22,7 +22,8 @@
 	"author": "Steven Velozo <steven@velozo.com>",
 	"license": "MIT",
 	"dependencies": {
-		"fable-serviceproviderbase": "^3.0.19"
+		"fable-serviceproviderbase": "^3.0.19",
+		"ws": "^8.20.0"
 	},
 	"devDependencies": {
 		"quackage": "^1.0.65"

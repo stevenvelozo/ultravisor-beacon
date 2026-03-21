@@ -70,20 +70,35 @@ class UltravisorBeaconCapabilityAdapter extends libCapabilityProvider
 		let tmpDescriptorActions = (this._Descriptor && this._Descriptor.actions) ? this._Descriptor.actions : {};
 		let tmpActionDef = tmpDescriptorActions[pAction];
 
-		if (!tmpActionDef || typeof tmpActionDef.Handler !== 'function')
+		// Per-action Handler takes priority
+		if (tmpActionDef && typeof tmpActionDef.Handler === 'function')
 		{
-			return fCallback(new Error(
-				`CapabilityAdapter "${this.Name}" has no Handler for action "${pAction}".`));
+			try
+			{
+				return tmpActionDef.Handler(pWorkItem, pContext, fCallback, fReportProgress);
+			}
+			catch (pError)
+			{
+				return fCallback(pError);
+			}
 		}
 
-		try
+		// Fall back to descriptor-level execute method (Provider pattern —
+		// a single execute() that routes actions internally)
+		if (typeof this._Descriptor.execute === 'function')
 		{
-			tmpActionDef.Handler(pWorkItem, pContext, fCallback, fReportProgress);
+			try
+			{
+				return this._Descriptor.execute(pAction, pWorkItem, pContext, fCallback, fReportProgress);
+			}
+			catch (pError)
+			{
+				return fCallback(pError);
+			}
 		}
-		catch (pError)
-		{
-			return fCallback(pError);
-		}
+
+		return fCallback(new Error(
+			`CapabilityAdapter "${this.Name}" has no Handler for action "${pAction}".`));
 	}
 
 	/**

@@ -29,8 +29,14 @@ const libCapabilityAdapter = require('./Ultravisor-Beacon-CapabilityAdapter.cjs'
 
 class UltravisorBeaconCapabilityManager
 {
-	constructor()
+	constructor(pLog)
 	{
+		this.log = pLog || {
+			info: (...pArgs) => { console.log(...pArgs); },
+			warn: (...pArgs) => { this.log.warn(...pArgs); },
+			error: (...pArgs) => { this.log.error(...pArgs); }
+		};
+
 		// Map of Capability name -> descriptor
 		this._Capabilities = {};
 	}
@@ -45,13 +51,13 @@ class UltravisorBeaconCapabilityManager
 	{
 		if (!pDescriptor || !pDescriptor.Capability)
 		{
-			console.error('[CapabilityManager] Descriptor must have a Capability name.');
+			this.log.error('[CapabilityManager] Descriptor must have a Capability name.');
 			return false;
 		}
 
 		if (!pDescriptor.actions || Object.keys(pDescriptor.actions).length === 0)
 		{
-			console.warn(`[CapabilityManager] Capability "${pDescriptor.Capability}" has no actions.`);
+			this.log.warn(`[CapabilityManager] Capability "${pDescriptor.Capability}" has no actions.`);
 		}
 
 		this._Capabilities[pDescriptor.Capability] = pDescriptor;

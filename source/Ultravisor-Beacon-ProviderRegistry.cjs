@@ -15,8 +15,14 @@ const libPath = require('path');
 
 class UltravisorBeaconProviderRegistry
 {
-	constructor()
+	constructor(pLog)
 	{
+		this.log = pLog || {
+			info: (...pArgs) => { console.log(...pArgs); },
+			warn: (...pArgs) => { console.warn(...pArgs); },
+			error: (...pArgs) => { console.error(...pArgs); }
+		};
+
 		// Map of 'Capability:Action' → { provider, actionDef }
 		this._ActionHandlers = {};
 
@@ -40,7 +46,7 @@ class UltravisorBeaconProviderRegistry
 	{
 		if (!pProvider || !pProvider.Capability)
 		{
-			console.error('[ProviderRegistry] Provider must have a Capability.');
+			this.log.error('[ProviderRegistry] Provider must have a Capability.');
 			return false;
 		}
 
@@ -49,7 +55,7 @@ class UltravisorBeaconProviderRegistry
 
 		if (tmpActionNames.length === 0)
 		{
-			console.warn(`[ProviderRegistry] Provider "${pProvider.Name}" declares no actions.`);
+			this.log.warn(`[ProviderRegistry] Provider "${pProvider.Name}" declares no actions.`);
 		}
 
 		// Index each action by composite key
@@ -83,7 +89,7 @@ class UltravisorBeaconProviderRegistry
 
 		this._Providers[pProvider.Name] = pProvider;
 
-		console.log(`[ProviderRegistry] Registered "${pProvider.Name}" → ` +
+		this.log.info(`[ProviderRegistry] Registered "${pProvider.Name}" → ` +
 			`${pProvider.Capability} [${tmpActionNames.join(', ')}]`);
 
 		return true;
@@ -190,7 +196,7 @@ class UltravisorBeaconProviderRegistry
 
 		if (!tmpSource)
 		{
-			console.error('[ProviderRegistry] Provider descriptor must have a Source.');
+			this.log.error('[ProviderRegistry] Provider descriptor must have a Source.');
 			return false;
 		}
 
@@ -222,13 +228,13 @@ class UltravisorBeaconProviderRegistry
 		}
 		catch (pError)
 		{
-			console.error(`[ProviderRegistry] Failed to load provider from "${tmpSource}": ${pError.message}`);
+			this.log.error(`[ProviderRegistry] Failed to load provider from "${tmpSource}": ${pError.message}`);
 			return false;
 		}
 
 		if (!tmpProviderModule)
 		{
-			console.error(`[ProviderRegistry] Could not load provider from: ${tmpSource}`);
+			this.log.error(`[ProviderRegistry] Could not load provider from: ${tmpSource}`);
 			return false;
 		}
 
@@ -255,7 +261,7 @@ class UltravisorBeaconProviderRegistry
 		}
 		else
 		{
-			console.error(`[ProviderRegistry] Invalid provider export from "${tmpSource}": ` +
+			this.log.error(`[ProviderRegistry] Invalid provider export from "${tmpSource}": ` +
 				`must be a class, factory function, or object with execute().`);
 			return false;
 		}

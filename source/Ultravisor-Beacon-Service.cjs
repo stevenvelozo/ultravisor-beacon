@@ -254,6 +254,7 @@ class UltravisorBeaconService extends libFableServiceBase
 			Contexts: this.options.Contexts || {},
 			BindAddresses: this.options.BindAddresses || [],
 			Operations: this._Operations.length > 0 ? this._Operations : undefined,
+			Log: this.log,
 			// Pass empty Providers array — we'll register adapters directly
 			Providers: []
 		});

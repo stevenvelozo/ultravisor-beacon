@@ -45,6 +45,15 @@ class UltravisorBeaconClient
 			Tags: {}
 		}, pConfig || {});
 
+		// Logger: use provided Fable log or fall back to console
+		this.log = this._Config.Log || {
+			trace: (...pArgs) => { console.log(...pArgs); },
+			debug: (...pArgs) => { console.log(...pArgs); },
+			info: (...pArgs) => { console.log(...pArgs); },
+			warn: (...pArgs) => { console.warn(...pArgs); },
+			error: (...pArgs) => { console.error(...pArgs); }
+		};
+
 		this._BeaconID = null;
 		this._PollInterval = null;
 		this._HeartbeatInterval = null;
@@ -52,13 +61,17 @@ class UltravisorBeaconClient
 		this._ActiveWorkItems = 0;
 		this._SessionCookie = null;
 		this._Authenticating = false;
+		this._ReconnectPending = false;
+		this._ReconnectAttempts = 0;
+		this._MaxReconnectDelayMs = 300000;
 
 		// WebSocket transport state — determined at runtime, not config
 		this._WebSocket = null;
 		this._UseWebSocket = false;
 
 		this._Executor = new libBeaconExecutor({
-			StagingPath: this._Config.StagingPath
+			StagingPath: this._Config.StagingPath,
+			Log: this.log
 		});
 
 		// Load capability providers
@@ -84,7 +97,7 @@ class UltravisorBeaconClient
 		}
 
 		let tmpCount = this._Executor.providerRegistry.loadProviders(tmpProviders);
-		console.log(`[Beacon] Loaded ${tmpCount} capability provider(s).`);
+		this.log.info(`[Beacon] Loaded ${tmpCount} capability provider(s).`);
 	}
 
 	// ================================================================
@@ -96,31 +109,31 @@ class UltravisorBeaconClient
 	 */
 	start(fCallback)
 	{
-		console.log(`[Beacon] Starting "${this._Config.Name}"...`);
-		console.log(`[Beacon] Server: ${this._Config.ServerURL}`);
+		this.log.info(`[Beacon] Starting "${this._Config.Name}"...`);
+		this.log.info(`[Beacon] Server: ${this._Config.ServerURL}`);
 
 		// Initialize all providers before registering
 		this._Executor.providerRegistry.initializeAll((pInitError) =>
 		{
 			if (pInitError)
 			{
-				console.error(`[Beacon] Provider initialization failed: ${pInitError.message}`);
+				this.log.error(`[Beacon] Provider initialization failed: ${pInitError.message}`);
 				return fCallback(pInitError);
 			}
 
 			let tmpCapabilities = this._Executor.providerRegistry.getCapabilities();
-			console.log(`[Beacon] Capabilities: ${tmpCapabilities.join(', ')}`);
+			this.log.info(`[Beacon] Capabilities: ${tmpCapabilities.join(', ')}`);
 
 			// Authenticate before registering (both transports need a session)
 			this._authenticate((pAuthError) =>
 			{
 				if (pAuthError)
 				{
-					console.error(`[Beacon] Authentication failed: ${pAuthError.message}`);
+					this.log.error(`[Beacon] Authentication failed: ${pAuthError.message}`);
 					return fCallback(pAuthError);
 				}
 
-				console.log(`[Beacon] Authenticated successfully.`);
+				this.log.info(`[Beacon] Authenticated successfully.`);
 
 				// Try WebSocket first — if ws library is available and the
 				// server supports it, we get push-based work dispatch.
@@ -131,7 +144,7 @@ class UltravisorBeaconClient
 					{
 						if (pWSError)
 						{
-							console.log(`[Beacon] WebSocket unavailable (${pWSError.message}), using HTTP polling.`);
+							this.log.info(`[Beacon] WebSocket unavailable (${pWSError.message}), using HTTP polling.`);
 							this._UseWebSocket = false;
 							this._startHTTP(fCallback);
 							return;
@@ -157,14 +170,14 @@ class UltravisorBeaconClient
 		{
 			if (pError)
 			{
-				console.error(`[Beacon] Registration failed: ${pError.message}`);
+				this.log.error(`[Beacon] Registration failed: ${pError.message}`);
 				return fCallback(pError);
 			}
 
 			this._BeaconID = pBeacon.BeaconID;
 			this._Running = true;
 
-			console.log(`[Beacon] Registered as ${this._BeaconID}`);
+			this.log.info(`[Beacon] Registered as ${this._BeaconID}`);
 
 			// Start polling for work
 			this._PollInterval = setInterval(() =>
@@ -190,7 +203,7 @@ class UltravisorBeaconClient
 	 */
 	stop(fCallback)
 	{
-		console.log(`[Beacon] Stopping...`);
+		this.log.info(`[Beacon] Stopping...`);
 		this._Running = false;
 
 		if (this._PollInterval)
@@ -226,7 +239,7 @@ class UltravisorBeaconClient
 		{
 			if (pShutdownError)
 			{
-				console.warn(`[Beacon] Provider shutdown warning: ${pShutdownError.message}`);
+				this.log.warn(`[Beacon] Provider shutdown warning: ${pShutdownError.message}`);
 			}
 
 			if (this._BeaconID)
@@ -235,15 +248,15 @@ class UltravisorBeaconClient
 				{
 					if (pError)
 					{
-						console.warn(`[Beacon] Deregistration warning: ${pError.message}`);
+						this.log.warn(`[Beacon] Deregistration warning: ${pError.message}`);
 					}
-					console.log(`[Beacon] Stopped.`);
+					this.log.info(`[Beacon] Stopped.`);
 					if (fCallback) return fCallback(null);
 				});
 			}
 			else
 			{
-				console.log(`[Beacon] Stopped.`);
+				this.log.info(`[Beacon] Stopped.`);
 				if (fCallback) return fCallback(null);
 			}
 		});
@@ -291,7 +304,7 @@ class UltravisorBeaconClient
 					// Take the name=value portion (before the first semicolon)
 					let tmpCookieParts = tmpSetCookieHeaders[0].split(';');
 					this._SessionCookie = tmpCookieParts[0].trim();
-					console.log(`[Beacon] Session cookie acquired.`);
+					this.log.info(`[Beacon] Session cookie acquired.`);
 				}
 
 				try
@@ -341,25 +354,25 @@ class UltravisorBeaconClient
 
 		this._SessionCookie = null;
 
-		console.log(`[Beacon] Reconnecting — re-authenticating...`);
+		this.log.info(`[Beacon] Reconnecting — re-authenticating...`);
 
 		this._authenticate((pAuthError) =>
 		{
 			if (pAuthError)
 			{
-				console.error(`[Beacon] Re-authentication failed: ${pAuthError.message}`);
+				this.log.error(`[Beacon] Re-authentication failed: ${pAuthError.message}`);
 				this._Authenticating = false;
 				setTimeout(() => { this._reconnect(); }, 10000);
 				return;
 			}
 
-			console.log(`[Beacon] Re-authenticated, re-registering...`);
+			this.log.info(`[Beacon] Re-authenticated, re-registering...`);
 
 			this._register((pRegError, pBeacon) =>
 			{
 				if (pRegError)
 				{
-					console.error(`[Beacon] Re-registration failed: ${pRegError.message}`);
+					this.log.error(`[Beacon] Re-registration failed: ${pRegError.message}`);
 					this._Authenticating = false;
 					setTimeout(() => { this._reconnect(); }, 10000);
 					return;
@@ -368,7 +381,7 @@ class UltravisorBeaconClient
 				this._BeaconID = pBeacon.BeaconID;
 				this._Authenticating = false;
 
-				console.log(`[Beacon] Reconnected as ${this._BeaconID}`);
+				this.log.info(`[Beacon] Reconnected as ${this._BeaconID}`);
 
 				// Restart polling
 				this._PollInterval = setInterval(() =>
@@ -471,7 +484,7 @@ class UltravisorBeaconClient
 	_executeWorkItem(pWorkItem)
 	{
 		this._ActiveWorkItems++;
-		console.log(`[Beacon] Executing work item [${pWorkItem.WorkItemHash}] (${pWorkItem.Capability}/${pWorkItem.Action})`);
+		this.log.info(`[Beacon] Executing work item [${pWorkItem.WorkItemHash}] (${pWorkItem.Capability}/${pWorkItem.Action})`);
 
 		// Create a progress callback that sends updates to the server
 		let tmpWorkItemHash = pWorkItem.WorkItemHash;
@@ -493,7 +506,7 @@ class UltravisorBeaconClient
 
 			if (pError)
 			{
-				console.error(`[Beacon] Execution error for [${pWorkItem.WorkItemHash}]: ${pError.message}`);
+				this.log.error(`[Beacon] Execution error for [${pWorkItem.WorkItemHash}]: ${pError.message}`);
 				if (this._UseWebSocket)
 				{
 					this._wsReportError(pWorkItem.WorkItemHash, pError.message, []);
@@ -509,11 +522,11 @@ class UltravisorBeaconClient
 			let tmpOutputs = pResult.Outputs || {};
 			if (tmpOutputs.ExitCode && tmpOutputs.ExitCode !== 0)
 			{
-				console.warn(`[Beacon] Work item [${pWorkItem.WorkItemHash}] completed with exit code ${tmpOutputs.ExitCode}`);
+				this.log.warn(`[Beacon] Work item [${pWorkItem.WorkItemHash}] completed with exit code ${tmpOutputs.ExitCode}`);
 			}
 			else
 			{
-				console.log(`[Beacon] Work item [${pWorkItem.WorkItemHash}] completed successfully.`);
+				this.log.info(`[Beacon] Work item [${pWorkItem.WorkItemHash}] completed successfully.`);
 			}
 
 			// Upload output file if one was produced (Result is a local path)
@@ -529,7 +542,7 @@ class UltravisorBeaconClient
 					try
 					{
 						let tmpBuffer = tmpFS.readFileSync(tmpResultPath);
-						console.log(`[Beacon] Uploading result file ${tmpOutputFilename} (${tmpBuffer.length} bytes) for [${pWorkItem.WorkItemHash}]`);
+						this.log.info(`[Beacon] Uploading result file ${tmpOutputFilename} (${tmpBuffer.length} bytes) for [${pWorkItem.WorkItemHash}]`);
 						this._wsSend({
 							Action: 'WorkResultUpload',
 							WorkItemHash: pWorkItem.WorkItemHash,
@@ -540,7 +553,7 @@ class UltravisorBeaconClient
 					}
 					catch (pUploadError)
 					{
-						console.error(`[Beacon] Failed to upload result file: ${pUploadError.message}`);
+						this.log.error(`[Beacon] Failed to upload result file: ${pUploadError.message}`);
 					}
 				}
 			}
@@ -568,7 +581,7 @@ class UltravisorBeaconClient
 			{
 				if (pError)
 				{
-					console.error(`[Beacon] Failed to report completion for [${pWorkItemHash}]: ${pError.message}`);
+					this.log.error(`[Beacon] Failed to report completion for [${pWorkItemHash}]: ${pError.message}`);
 				}
 			});
 	}
@@ -581,7 +594,7 @@ class UltravisorBeaconClient
 			{
 				if (pError)
 				{
-					console.error(`[Beacon] Failed to report error for [${pWorkItemHash}]: ${pError.message}`);
+					this.log.error(`[Beacon] Failed to report error for [${pWorkItemHash}]: ${pError.message}`);
 				}
 			});
 	}
@@ -600,7 +613,7 @@ class UltravisorBeaconClient
 				if (pError)
 				{
 					// Fire-and-forget — log but don't affect execution
-					console.warn(`[Beacon] Failed to report progress for [${pWorkItemHash}]: ${pError.message}`);
+					this.log.warn(`[Beacon] Failed to report progress for [${pWorkItemHash}]: ${pError.message}`);
 				}
 			});
 	}
@@ -621,7 +634,7 @@ class UltravisorBeaconClient
 			{
 				if (pError)
 				{
-					console.warn(`[Beacon] Heartbeat failed: ${pError.message}`);
+					this.log.warn(`[Beacon] Heartbeat failed: ${pError.message}`);
 				}
 			});
 	}
@@ -730,7 +743,7 @@ class UltravisorBeaconClient
 
 		this._WebSocket.on('open', () =>
 		{
-			console.log(`[Beacon] WebSocket connected to ${tmpWSURL}`);
+			this.log.info(`[Beacon] WebSocket connected to ${tmpWSURL}`);
 
 			// Register over WebSocket
 			let tmpWSRegPayload = {
@@ -779,7 +792,7 @@ class UltravisorBeaconClient
 
 		this._WebSocket.on('error', (pError) =>
 		{
-			console.error(`[Beacon] WebSocket error: ${pError.message}`);
+			this.log.error(`[Beacon] WebSocket error: ${pError.message}`);
 			if (!tmpCallbackFired)
 			{
 				tmpCallbackFired = true;
@@ -789,13 +802,13 @@ class UltravisorBeaconClient
 
 		this._WebSocket.on('close', () =>
 		{
-			console.log(`[Beacon] WebSocket connection closed.`);
+			this.log.info(`[Beacon] WebSocket connection closed.`);
 			this._WebSocket = null;
 
-			if (this._Running && !this._Authenticating)
+			if (this._Running && !this._Authenticating && !this._ReconnectPending)
 			{
 				// Connection lost while running — attempt reconnect
-				this._wsReconnect();
+				this._scheduleReconnect();
 			}
 		});
 	}
@@ -821,7 +834,7 @@ class UltravisorBeaconClient
 		if (tmpData.EventType === 'BeaconRegistered')
 		{
 			this._BeaconID = tmpData.BeaconID;
-			console.log(`[Beacon] Registered via WebSocket as ${this._BeaconID}`);
+			this.log.info(`[Beacon] Registered via WebSocket as ${this._BeaconID}`);
 			if (typeof fRegistrationCallback === 'function')
 			{
 				fRegistrationCallback({ BeaconID: this._BeaconID });
@@ -831,14 +844,14 @@ class UltravisorBeaconClient
 		{
 			if (this._ActiveWorkItems >= this._Config.MaxConcurrent)
 			{
-				console.log(`[Beacon] At max concurrent capacity, ignoring pushed work item.`);
+				this.log.info(`[Beacon] At max concurrent capacity, ignoring pushed work item.`);
 				return;
 			}
 			this._executeWorkItem(tmpData.WorkItem);
 		}
 		else if (tmpData.EventType === 'Deregistered')
 		{
-			console.log(`[Beacon] Deregistered by server.`);
+			this.log.info(`[Beacon] Deregistered by server.`);
 			this._BeaconID = null;
 		}
 	}
@@ -933,6 +946,34 @@ class UltravisorBeaconClient
 	}
 
 	/**
+	 * Schedule a reconnection with exponential backoff.
+	 * Prevents multiple close events from triggering parallel reconnections.
+	 */
+	_scheduleReconnect()
+	{
+		if (this._ReconnectPending || this._Authenticating)
+		{
+			return;
+		}
+
+		this._ReconnectPending = true;
+		this._ReconnectAttempts++;
+
+		// Exponential backoff: 10s, 20s, 40s, 80s, 160s, capped at 5 min
+		let tmpDelay = Math.min(
+			this._Config.ReconnectIntervalMs * Math.pow(2, this._ReconnectAttempts - 1),
+			this._MaxReconnectDelayMs);
+
+		this.log.info(`[Beacon] Scheduling reconnection attempt ${this._ReconnectAttempts} in ${Math.round(tmpDelay / 1000)}s`);
+
+		setTimeout(() =>
+		{
+			this._ReconnectPending = false;
+			this._wsReconnect();
+		}, tmpDelay);
+	}
+
+	/**
 	 * Reconnect the WebSocket after unexpected disconnection.
 	 * Falls back to HTTP polling if WebSocket can't be re-established.
 	 */
@@ -951,15 +992,15 @@ class UltravisorBeaconClient
 		}
 
 		this._SessionCookie = null;
-		console.log(`[Beacon] WebSocket disconnected — re-authenticating...`);
+		this.log.info(`[Beacon] Reconnecting — attempt ${this._ReconnectAttempts}...`);
 
 		this._authenticate((pAuthError) =>
 		{
 			if (pAuthError)
 			{
-				console.error(`[Beacon] Re-authentication failed: ${pAuthError.message}`);
+				this.log.error(`[Beacon] Re-authentication failed: ${pAuthError.message}`);
 				this._Authenticating = false;
-				setTimeout(() => { this._wsReconnect(); }, this._Config.ReconnectIntervalMs);
+				this._scheduleReconnect();
 				return;
 			}
 
@@ -971,21 +1012,23 @@ class UltravisorBeaconClient
 				if (pError)
 				{
 					// WebSocket failed — fall back to HTTP polling
-					console.log(`[Beacon] WebSocket reconnection failed, falling back to HTTP polling.`);
+					this.log.info(`[Beacon] WebSocket reconnection failed, falling back to HTTP polling.`);
 					this._UseWebSocket = false;
 					this._startHTTP((pHTTPError, pHTTPBeacon) =>
 					{
 						if (pHTTPError)
 						{
-							console.error(`[Beacon] HTTP fallback failed: ${pHTTPError.message}`);
-							setTimeout(() => { this._wsReconnect(); }, this._Config.ReconnectIntervalMs);
+							this.log.error(`[Beacon] HTTP fallback failed: ${pHTTPError.message}`);
+							this._scheduleReconnect();
 							return;
 						}
-						console.log(`[Beacon] Reconnected via HTTP polling as ${pHTTPBeacon.BeaconID}`);
+						this._ReconnectAttempts = 0;
+						this.log.info(`[Beacon] Reconnected via HTTP polling as ${pHTTPBeacon.BeaconID}`);
 					});
 					return;
 				}
-				console.log(`[Beacon] WebSocket reconnected as ${pBeacon.BeaconID}`);
+				this._ReconnectAttempts = 0;
+				this.log.info(`[Beacon] WebSocket reconnected as ${pBeacon.BeaconID}`);
 			});
 		});
 	}

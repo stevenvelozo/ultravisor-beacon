@@ -24,7 +24,12 @@ class UltravisorBeaconExecutor
 	{
 		this._Config = pConfig || {};
 		this._StagingPath = this._Config.StagingPath || process.cwd();
-		this._ProviderRegistry = new libBeaconProviderRegistry();
+		this.log = this._Config.Log || {
+			info: (...pArgs) => { console.log(...pArgs); },
+			warn: (...pArgs) => { this.log.warn(...pArgs); },
+			error: (...pArgs) => { console.error(...pArgs); }
+		};
+		this._ProviderRegistry = new libBeaconProviderRegistry(this.log);
 	}
 
 	/**
@@ -432,7 +437,7 @@ class UltravisorBeaconExecutor
 		catch (pError)
 		{
 			// Best-effort cleanup
-			console.warn(`[Beacon Executor] Could not clean up work directory: ${pError.message}`);
+			this.log.warn(`[Beacon Executor] Could not clean up work directory: ${pError.message}`);
 		}
 	}
 
@@ -457,7 +462,7 @@ class UltravisorBeaconExecutor
 					}
 					catch (pError)
 					{
-						console.warn(`[Beacon Executor] Could not clean up affinity dir [${tmpEntries[i]}]: ${pError.message}`);
+						this.log.warn(`[Beacon Executor] Could not clean up affinity dir [${tmpEntries[i]}]: ${pError.message}`);
 					}
 				}
 			}

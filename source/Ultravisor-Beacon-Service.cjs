@@ -252,6 +252,7 @@ class UltravisorBeaconService extends libFableServiceBase
 			StagingPath: this.options.StagingPath || process.cwd(),
 			Tags: this.options.Tags || {},
 			Contexts: this.options.Contexts || {},
+			BindAddresses: this.options.BindAddresses || [],
 			Operations: this._Operations.length > 0 ? this._Operations : undefined,
 			// Pass empty Providers array — we'll register adapters directly
 			Providers: []

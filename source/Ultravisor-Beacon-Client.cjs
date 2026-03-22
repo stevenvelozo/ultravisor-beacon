@@ -414,6 +414,12 @@ class UltravisorBeaconClient
 			tmpBody.Operations = this._Config.Operations;
 		}
 
+		// Include bind addresses so the coordinator knows how to reach us
+		if (Array.isArray(this._Config.BindAddresses) && this._Config.BindAddresses.length > 0)
+		{
+			tmpBody.BindAddresses = this._Config.BindAddresses;
+		}
+
 		this._httpRequest('POST', '/Beacon/Register', tmpBody, fCallback);
 	}
 
@@ -713,6 +719,10 @@ class UltravisorBeaconClient
 			if (Array.isArray(this._Config.Operations) && this._Config.Operations.length > 0)
 			{
 				tmpWSRegPayload.Operations = this._Config.Operations;
+			}
+			if (Array.isArray(this._Config.BindAddresses) && this._Config.BindAddresses.length > 0)
+			{
+				tmpWSRegPayload.BindAddresses = this._Config.BindAddresses;
 			}
 			this._wsSend(tmpWSRegPayload);
 		});

@@ -516,6 +516,35 @@ class UltravisorBeaconClient
 				console.log(`[Beacon] Work item [${pWorkItem.WorkItemHash}] completed successfully.`);
 			}
 
+			// Upload output file if one was produced (Result is a local path)
+			let tmpResultPath = tmpOutputs.Result;
+			let tmpSettings = pWorkItem.Settings || {};
+			let tmpOutputFilename = tmpSettings.OutputFile || tmpSettings.OutputFilename || '';
+			if (tmpResultPath && tmpOutputFilename && this._UseWebSocket
+				&& this._WebSocket && this._WebSocket.readyState === libWebSocket.OPEN)
+			{
+				let tmpFS = require('fs');
+				if (tmpFS.existsSync(tmpResultPath))
+				{
+					try
+					{
+						let tmpBuffer = tmpFS.readFileSync(tmpResultPath);
+						console.log(`[Beacon] Uploading result file ${tmpOutputFilename} (${tmpBuffer.length} bytes) for [${pWorkItem.WorkItemHash}]`);
+						this._wsSend({
+							Action: 'WorkResultUpload',
+							WorkItemHash: pWorkItem.WorkItemHash,
+							OutputFilename: tmpOutputFilename,
+							OutputSize: tmpBuffer.length
+						});
+						this._WebSocket.send(tmpBuffer);
+					}
+					catch (pUploadError)
+					{
+						console.error(`[Beacon] Failed to upload result file: ${pUploadError.message}`);
+					}
+				}
+			}
+
 			if (this._UseWebSocket)
 			{
 				this._wsReportComplete(pWorkItem.WorkItemHash, tmpOutputs, pResult.Log || []);

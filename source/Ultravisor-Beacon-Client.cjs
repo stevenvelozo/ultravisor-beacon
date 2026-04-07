@@ -832,6 +832,13 @@ class UltravisorBeaconClient
 			{
 				tmpWSRegPayload.BindAddresses = this._Config.BindAddresses;
 			}
+			// Shared-fs identity must be sent on the WebSocket registration path
+			// too — most beacons connect via WebSocket now and the HTTP _register
+			// payload is only used for the initial probe / fallback. Without
+			// this, the coordinator stores the beacon record with HostID=null
+			// and the reachability auto-detect can't find it as a peer.
+			tmpWSRegPayload.HostID = this._Config.HostID || libOS.hostname();
+			tmpWSRegPayload.SharedMounts = this._normalizeSharedMounts(this._Config.SharedMounts);
 			this._wsSend(tmpWSRegPayload);
 		});
 

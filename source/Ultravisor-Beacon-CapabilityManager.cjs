@@ -33,8 +33,8 @@ class UltravisorBeaconCapabilityManager
 	{
 		this.log = pLog || {
 			info: (...pArgs) => { console.log(...pArgs); },
-			warn: (...pArgs) => { this.log.warn(...pArgs); },
-			error: (...pArgs) => { this.log.error(...pArgs); }
+			warn: (...pArgs) => { console.warn(...pArgs); },
+			error: (...pArgs) => { console.error(...pArgs); }
 		};
 
 		// Map of Capability name -> descriptor

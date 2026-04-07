@@ -10,12 +10,17 @@
  */
 
 const libAssert = require('assert');
+const libFS = require('fs');
+const libPath = require('path');
+const libCrypto = require('crypto');
+const libOS = require('os');
 
 const libCapabilityProvider = require('../source/Ultravisor-Beacon-CapabilityProvider.cjs');
 const libCapabilityAdapter = require('../source/Ultravisor-Beacon-CapabilityAdapter.cjs');
 const libCapabilityManager = require('../source/Ultravisor-Beacon-CapabilityManager.cjs');
 const libConnectivityHTTP = require('../source/Ultravisor-Beacon-ConnectivityHTTP.cjs');
 const libProviderRegistry = require('../source/Ultravisor-Beacon-ProviderRegistry.cjs');
+const libBeaconClient = require('../source/Ultravisor-Beacon-Client.cjs');
 
 // We can require the service without Fable for standalone testing
 const libBeaconService = require('../source/Ultravisor-Beacon-Service.cjs');
@@ -600,6 +605,137 @@ suite
 							libAssert.strictEqual(pResult.Outputs.Greeting, 'Hello, Ultravisor!');
 							fDone();
 						});
+					}
+				);
+			}
+		);
+
+		// ============================================================
+		// Shared-FS Reachability — SharedMounts normalization
+		// ============================================================
+		suite
+		(
+			'SharedMounts Normalization',
+			function ()
+			{
+				test
+				(
+					'Should return empty array for missing/empty input',
+					function ()
+					{
+						let tmpClient = new libBeaconClient({ Name: 'mt-test', Capabilities: [] });
+						libAssert.deepStrictEqual(tmpClient._normalizeSharedMounts(undefined), []);
+						libAssert.deepStrictEqual(tmpClient._normalizeSharedMounts(null), []);
+						libAssert.deepStrictEqual(tmpClient._normalizeSharedMounts([]), []);
+						libAssert.deepStrictEqual(tmpClient._normalizeSharedMounts('not-an-array'), []);
+					}
+				);
+
+				test
+				(
+					'Should auto-derive MountID from stat.dev + path',
+					function ()
+					{
+						let tmpClient = new libBeaconClient({ Name: 'mt-test', Capabilities: [] });
+						let tmpRoot = libOS.tmpdir();
+						let tmpResolved = libPath.resolve(tmpRoot);
+						let tmpExpected = libCrypto.createHash('sha256')
+							.update(libFS.statSync(tmpResolved).dev + ':' + tmpResolved)
+							.digest('hex').substring(0, 16);
+
+						let tmpResult = tmpClient._normalizeSharedMounts([{ Root: tmpRoot }]);
+						libAssert.strictEqual(tmpResult.length, 1);
+						libAssert.strictEqual(tmpResult[0].MountID, tmpExpected);
+						libAssert.strictEqual(tmpResult[0].Root, tmpResolved);
+					}
+				);
+
+				test
+				(
+					'Should preserve explicit MountID without stat',
+					function ()
+					{
+						let tmpClient = new libBeaconClient({ Name: 'mt-test', Capabilities: [] });
+						let tmpResult = tmpClient._normalizeSharedMounts(
+							[{ MountID: 'manual-id-1234', Root: libOS.tmpdir() }]);
+						libAssert.strictEqual(tmpResult.length, 1);
+						libAssert.strictEqual(tmpResult[0].MountID, 'manual-id-1234');
+					}
+				);
+
+				test
+				(
+					'Should skip entries without a Root',
+					function ()
+					{
+						let tmpClient = new libBeaconClient({ Name: 'mt-test', Capabilities: [] });
+						let tmpResult = tmpClient._normalizeSharedMounts(
+							[{ MountID: 'no-root' }, { Root: libOS.tmpdir() }, null, undefined]);
+						libAssert.strictEqual(tmpResult.length, 1);
+						libAssert.strictEqual(tmpResult[0].Root, libPath.resolve(libOS.tmpdir()));
+					}
+				);
+
+				test
+				(
+					'Should skip entries whose Root does not exist on this beacon',
+					function ()
+					{
+						let tmpClient = new libBeaconClient({ Name: 'mt-test', Capabilities: [] });
+						let tmpResult = tmpClient._normalizeSharedMounts(
+							[{ Root: '/nonexistent-path-12345-xyz' }]);
+						libAssert.deepStrictEqual(tmpResult, []);
+					}
+				);
+
+				test
+				(
+					'Two beacons that point at the same Root should derive identical MountIDs',
+					function ()
+					{
+						let tmpClientA = new libBeaconClient({ Name: 'mt-a', Capabilities: [] });
+						let tmpClientB = new libBeaconClient({ Name: 'mt-b', Capabilities: [] });
+						let tmpA = tmpClientA._normalizeSharedMounts([{ Root: libOS.tmpdir() }]);
+						let tmpB = tmpClientB._normalizeSharedMounts([{ Root: libOS.tmpdir() }]);
+						libAssert.strictEqual(tmpA[0].MountID, tmpB[0].MountID);
+					}
+				);
+			}
+		);
+
+		// ============================================================
+		// BeaconService — HostID and SharedMounts forwarding
+		// ============================================================
+		suite
+		(
+			'Service forwards HostID and SharedMounts',
+			function ()
+			{
+				test
+				(
+					'Service options should accept HostID and SharedMounts with sensible defaults',
+					function ()
+					{
+						let tmpService = new libBeaconService({ Name: 'fwd-test' });
+						// Defaults from Object.assign should land
+						libAssert.strictEqual(tmpService.options.HostID, '');
+						libAssert.deepStrictEqual(tmpService.options.SharedMounts, []);
+					}
+				);
+
+				test
+				(
+					'Service options should preserve caller-supplied HostID and SharedMounts',
+					function ()
+					{
+						let tmpService = new libBeaconService({
+							Name: 'fwd-test',
+							HostID: 'custom-host-id',
+							SharedMounts: [{ MountID: 'abc123', Root: '/data' }]
+						});
+						libAssert.strictEqual(tmpService.options.HostID, 'custom-host-id');
+						libAssert.deepStrictEqual(tmpService.options.SharedMounts,
+							[{ MountID: 'abc123', Root: '/data' }]);
 					}
 				);
 			}

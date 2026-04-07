@@ -14,6 +14,10 @@
  */
 
 const libHTTP = require('http');
+const libOS = require('os');
+const libFS = require('fs');
+const libPath = require('path');
+const libCrypto = require('crypto');
 
 let libWebSocket;
 try
@@ -433,7 +437,69 @@ class UltravisorBeaconClient
 			tmpBody.BindAddresses = this._Config.BindAddresses;
 		}
 
+		// Host identity — used by the reachability matrix to detect beacons that
+		// live on the same physical machine. Caller can override; default is the
+		// node hostname (which inside a container is the container ID).
+		tmpBody.HostID = this._Config.HostID || libOS.hostname();
+
+		// Shared filesystem mounts — each entry tells the coordinator about a
+		// local filesystem tree this beacon advertises as accessible. When two
+		// beacons report the same MountID, the reachability matrix can pick the
+		// "shared-fs" strategy to skip an HTTP file transfer entirely.
+		//
+		// The MountID derivation includes stat.dev so two beacons that bind-mount
+		// the same host directory get the same ID, while two unrelated /media
+		// directories on different machines get different IDs.
+		tmpBody.SharedMounts = this._normalizeSharedMounts(this._Config.SharedMounts);
+
 		this._httpRequest('POST', '/Beacon/Register', tmpBody, fCallback);
+	}
+
+	_normalizeSharedMounts(pMounts)
+	{
+		if (!Array.isArray(pMounts) || pMounts.length === 0)
+		{
+			return [];
+		}
+		let tmpResult = [];
+		for (let i = 0; i < pMounts.length; i++)
+		{
+			let tmpEntry = pMounts[i];
+			if (!tmpEntry || !tmpEntry.Root)
+			{
+				continue;
+			}
+			let tmpRoot;
+			try
+			{
+				tmpRoot = libPath.resolve(tmpEntry.Root);
+			}
+			catch (pError)
+			{
+				continue;
+			}
+			let tmpMountID = tmpEntry.MountID;
+			if (!tmpMountID)
+			{
+				try
+				{
+					let tmpStat = libFS.statSync(tmpRoot);
+					tmpMountID = libCrypto.createHash('sha256')
+						.update(tmpStat.dev + ':' + tmpRoot)
+						.digest('hex').substring(0, 16);
+				}
+				catch (pError)
+				{
+					// Mount root does not exist on this beacon — skip it.
+					continue;
+				}
+			}
+			tmpResult.push({
+				MountID: tmpMountID,
+				Root: tmpRoot
+			});
+		}
+		return tmpResult;
 	}
 
 	_deregister(fCallback)

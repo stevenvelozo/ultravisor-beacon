@@ -51,7 +51,9 @@ class UltravisorBeaconService extends libFableServiceBase
 			HeartbeatIntervalMs: 30000,
 			StagingPath: '',
 			Tags: {},
-			Contexts: {}
+			Contexts: {},
+			HostID: '',
+			SharedMounts: []
 		}, this.options || {});
 
 		// Internal components
@@ -258,6 +260,18 @@ class UltravisorBeaconService extends libFableServiceBase
 			// Pass empty Providers array — we'll register adapters directly
 			Providers: []
 		});
+
+		// Shared-fs identity (forwarded to the thin client which sends it to the
+		// coordinator at registration time so the reachability matrix can detect
+		// beacons that share a filesystem on the same host).
+		if (this.options.HostID)
+		{
+			tmpClientConfig.HostID = this.options.HostID;
+		}
+		if (Array.isArray(this.options.SharedMounts) && this.options.SharedMounts.length > 0)
+		{
+			tmpClientConfig.SharedMounts = this.options.SharedMounts;
+		}
 
 		// Create thin client
 		this._ThinClient = new libBeaconClient(tmpClientConfig);

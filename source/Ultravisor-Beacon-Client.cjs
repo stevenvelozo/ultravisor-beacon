@@ -839,6 +839,19 @@ class UltravisorBeaconClient
 			// and the reachability auto-detect can't find it as a peer.
 			tmpWSRegPayload.HostID = this._Config.HostID || libOS.hostname();
 			tmpWSRegPayload.SharedMounts = this._normalizeSharedMounts(this._Config.SharedMounts);
+
+			// Diagnostic: log the shared-fs fields being sent at LogNoisiness>=2.
+			// If the coordinator later reports the beacon as having no HostID,
+			// this log line is the definitive proof of what the client actually
+			// transmitted. Without this, we can't tell whether a missing HostID
+			// is a client-side bug (not sending) or a server-side bug (dropping).
+			let tmpNoisy = (this._Config && this._Config.Log && this._Config.Log.LogNoisiness) ||
+				(this.log && this.log.LogNoisiness) || 0;
+			if (tmpNoisy >= 2)
+			{
+				this.log.info(`[Beacon] WS register payload HostID=${tmpWSRegPayload.HostID || '(none)'} SharedMounts=${JSON.stringify(tmpWSRegPayload.SharedMounts || [])}`);
+			}
+
 			this._wsSend(tmpWSRegPayload);
 		});
 

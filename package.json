@@ -26,6 +26,6 @@
 		"ws": "^8.20.0"
 	},
 	"devDependencies": {
-		"quackage": "^1.0.65"
+		"quackage": "^1.1.0"
 	}
 }

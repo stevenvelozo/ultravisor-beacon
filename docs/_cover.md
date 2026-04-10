@@ -1,4 +1,4 @@
-# Ultravisor Beacon <small>0.0.1</small>
+# Ultravisor Beacon
 
 > Lightweight beacon client and Fable service for remote task execution
 

@@ -6,12 +6,12 @@ Ultravisor Beacon turns any Node.js application into a distributed worker node. 
 
 ## Features
 
-- **Fable Service Integration** — Register as a service in any Fable/Pict application with `addAndInstantiateServiceType()`
-- **Pluggable Providers** — Built-in Shell, FileSystem, and LLM providers; extend with custom providers via class, factory function, or npm package
-- **Automatic Transport** — Tries WebSocket for push-based dispatch, falls back to HTTP polling transparently; reconnects on disconnect
-- **File Transfer** — Automatic source file download and output collection with affinity-scoped caching for repeated operations
-- **Multi-Backend LLM** — Unified interface across OpenAI, Anthropic, Ollama, and OpenAI-compatible APIs
-- **Resilient Connectivity** — Auto-reconnect with re-authentication on connection loss; WebSocket-to-HTTP fallback
+- **Fable Service Integration** -- Register as a service in any Fable/Pict application with `addAndInstantiateServiceType()`
+- **Pluggable Providers** -- Built-in Shell, FileSystem, and LLM providers; extend with custom providers via class, factory function, or npm package
+- **Automatic Transport** -- Tries WebSocket for push-based dispatch, falls back to HTTP polling transparently; reconnects on disconnect
+- **File Transfer** -- Automatic source file download and output collection with affinity-scoped caching for repeated operations
+- **Multi-Backend LLM** -- Unified interface across OpenAI, Anthropic, Ollama, and OpenAI-compatible APIs
+- **Resilient Connectivity** -- Auto-reconnect with re-authentication on connection loss; WebSocket-to-HTTP fallback
 
 ## Quick Start
 
@@ -64,9 +64,9 @@ npm install ultravisor-beacon
 
 ### Two Usage Modes
 
-1. **Fable Service** — Use `UltravisorBeaconService` to embed beacon functionality into an existing Fable application. Register capabilities with handler functions and call `enable()`.
+1. **Fable Service** -- Use `UltravisorBeaconService` to embed beacon functionality into an existing Fable application. Register capabilities with handler functions and call `enable()`.
 
-2. **Standalone Client** — Use `UltravisorBeaconClient` directly for headless worker nodes. Configure with provider descriptors and call `start()`.
+2. **Standalone Client** -- Use `UltravisorBeaconClient` directly for headless worker nodes. Configure with provider descriptors and call `start()`.
 
 ### Capabilities and Providers
 
@@ -78,7 +78,7 @@ A **provider** implements a capability. Built-in providers handle common tasks; 
 
 Beacons auto-negotiate their transport:
 
-1. Try WebSocket — server pushes work items immediately
+1. Try WebSocket -- server pushes work items immediately
 2. Fall back to HTTP polling if WebSocket unavailable
 3. Reconnect automatically on disconnection
 
@@ -86,13 +86,13 @@ The coordinator does not track transport type. It checks for a live WebSocket wh
 
 ## Documentation
 
-- [Quick Start](quickstart.md) — Step-by-step setup
-- [Architecture](architecture.md) — System design with diagrams
-- [Providers](providers/README.md) — Built-in and custom providers
-- [API Reference](api/README.md) — Complete class and method reference
+- [Quick Start](quickstart.md) -- Step-by-step setup
+- [Architecture](architecture.md) -- System design with diagrams
+- [Providers](providers/README.md) -- Built-in and custom providers
+- [API Reference](api/README.md) -- Complete class and method reference
 
 ## Related Packages
 
-- [fable](https://github.com/stevenvelozo/fable) — Service dependency injection framework
-- [fable-serviceproviderbase](https://github.com/stevenvelozo/fable-serviceproviderbase) — Service provider base class
-- [ultravisor](https://github.com/stevenvelozo/ultravisor) — Process supervision and orchestration server
+- [fable](https://github.com/stevenvelozo/fable) -- Service dependency injection framework
+- [fable-serviceproviderbase](https://github.com/stevenvelozo/fable-serviceproviderbase) -- Service provider base class
+- [ultravisor](https://github.com/stevenvelozo/ultravisor) -- Process supervision and orchestration server

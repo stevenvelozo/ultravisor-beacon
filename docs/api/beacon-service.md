@@ -76,7 +76,7 @@ beacon.registerCapability(pDescriptor)
 
 ### Returns
 
-`this` — chainable.
+`this` -- chainable.
 
 ### Example
 
@@ -126,7 +126,7 @@ beacon.removeCapability(pCapabilityName)
 
 ### Returns
 
-`this` — chainable.
+`this` -- chainable.
 
 ---
 
@@ -142,7 +142,7 @@ beacon.getCapabilityNames()
 
 ### Returns
 
-`string[]` — Array of capability names.
+`string[]` -- Array of capability names.
 
 ### Example
 
@@ -180,7 +180,7 @@ function (pError, pBeacon)
 2. Converts registered capabilities into provider adapters
 3. Creates a `BeaconClient` with transport config
 4. Registers adapters with the client's provider registry
-5. Starts the client (authenticate → register → poll/WebSocket)
+5. Starts the client (authenticate -> register -> poll/WebSocket)
 
 ### Example
 

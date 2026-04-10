@@ -54,8 +54,8 @@ Multi-backend LLM API calls with unified request/response normalization across O
 
 The `APIKey` config supports environment variable syntax:
 
-- `'sk-abc123...'` — Used as-is
-- `'$OPENAI_API_KEY'` — Resolved from `process.env.OPENAI_API_KEY` at initialization
+- `'sk-abc123...'` -- Used as-is
+- `'$OPENAI_API_KEY'` -- Resolved from `process.env.OPENAI_API_KEY` at initialization
 
 ---
 

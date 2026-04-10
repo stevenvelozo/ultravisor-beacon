@@ -153,8 +153,8 @@ Copy a file from source to target. Creates parent directories for the target if 
 
 // Result
 {
-	Outputs: { StdOut: 'Copied /data/original.pdf → /backup/original.pdf', ExitCode: 0, Result: '/backup/original.pdf' },
-	Log: ['FileSystem Copy: copied /data/original.pdf → /backup/original.pdf']
+	Outputs: { StdOut: 'Copied /data/original.pdf -> /backup/original.pdf', ExitCode: 0, Result: '/backup/original.pdf' },
+	Log: ['FileSystem Copy: copied /data/original.pdf -> /backup/original.pdf']
 }
 ```
 

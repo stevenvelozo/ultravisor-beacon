@@ -91,9 +91,9 @@ executor.execute(pWorkItem, fCallback, fReportProgress)
 
 ### Description
 
-1. **Resolve** — Finds the provider via `ProviderRegistry.resolve(Capability, Action)`
-2. **Check file transfer** — If `SourceURL` or `OutputFilename` is set, delegates to the file transfer pipeline
-3. **Execute** — Calls `provider.execute(action, workItem, context, callback, progress)`
+1. **Resolve** -- Finds the provider via `ProviderRegistry.resolve(Capability, Action)`
+2. **Check file transfer** -- If `SourceURL` or `OutputFilename` is set, delegates to the file transfer pipeline
+3. **Execute** -- Calls `provider.execute(action, workItem, context, callback, progress)`
 
 If no provider matches, returns an error result with `ExitCode: -1`.
 
@@ -101,11 +101,11 @@ If no provider matches, returns an error result with `ExitCode: -1`.
 
 When file transfer settings are present:
 
-1. **Download** — Fetches `SourceURL` to a local path (affinity-cached or per-work-item)
-2. **Substitute** — Replaces `{SourcePath}` and `{OutputPath}` in `Settings.Command`
-3. **Execute** — Runs the provider
-4. **Collect** — If `OutputFilename` + `ReturnOutputAsBase64`, reads and base64-encodes the output file
-5. **Cleanup** — Removes the per-work-item directory (affinity directories persist)
+1. **Download** -- Fetches `SourceURL` to a local path (affinity-cached or per-work-item)
+2. **Substitute** -- Replaces `{SourcePath}` and `{OutputPath}` in `Settings.Command`
+3. **Execute** -- Runs the provider
+4. **Collect** -- If `OutputFilename` + `ReturnOutputAsBase64`, reads and base64-encodes the output file
+5. **Cleanup** -- Removes the per-work-item directory (affinity directories persist)
 
 ### Example
 

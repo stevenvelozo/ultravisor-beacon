@@ -5,22 +5,22 @@ A lightweight beacon client and Fable service for remote task execution. Ultravi
 
 ## Features
 
-- **Fable Service Integration** — Register as a service in any Fable/Pict application with `addAndInstantiateServiceType()`
-- **Pluggable Providers** — Built-in Shell, FileSystem, and LLM providers; extend with custom providers via class, factory, or npm package
-- **Automatic Transport** — Tries WebSocket for push-based dispatch, falls back to HTTP polling transparently
-- **File Transfer** — Automatic source file download and output collection with affinity-scoped caching
-- **Multi-Backend LLM** — Unified interface across OpenAI, Anthropic, Ollama, and OpenAI-compatible APIs
-- **Resilient Connectivity** — Auto-reconnect with re-authentication on connection loss
+- **Fable Service Integration** -- Register as a service in any Fable/Pict application with `addAndInstantiateServiceType()`
+- **Pluggable Providers** -- Built-in Shell, FileSystem, and LLM providers; extend with custom providers via class, factory, or npm package
+- **Automatic Transport** -- Tries WebSocket for push-based dispatch, falls back to HTTP polling transparently
+- **File Transfer** -- Automatic source file download and output collection with affinity-scoped caching
+- **Multi-Backend LLM** -- Unified interface across OpenAI, Anthropic, Ollama, and OpenAI-compatible APIs
+- **Resilient Connectivity** -- Auto-reconnect with re-authentication on connection loss
 
 ## Documentation
 
 Comprehensive documentation is available in the [docs](./docs) folder:
 
-- [Overview](./docs/README.md) — Introduction and getting started
-- [Quick Start](./docs/quickstart.md) — Step-by-step setup guide
-- [Architecture](./docs/architecture.md) — System design and mermaid diagrams
-- [API Reference](./docs/api/README.md) — All classes and methods
-- [Providers](./docs/providers/README.md) — Built-in and custom providers
+- [Overview](./docs/README.md) -- Introduction and getting started
+- [Quick Start](./docs/quickstart.md) -- Step-by-step setup guide
+- [Architecture](./docs/architecture.md) -- System design and mermaid diagrams
+- [API Reference](./docs/api/README.md) -- All classes and methods
+- [Providers](./docs/providers/README.md) -- Built-in and custom providers
 
 ## Install
 
@@ -87,9 +87,9 @@ tmpClient.start(function (pError, pBeacon)
 
 ## Related Packages
 
-- [fable](https://github.com/stevenvelozo/fable) — Service dependency injection framework
-- [fable-serviceproviderbase](https://github.com/stevenvelozo/fable-serviceproviderbase) — Service provider base class
-- [ultravisor](https://github.com/stevenvelozo/ultravisor) — Process supervision and orchestration server
+- [fable](https://github.com/stevenvelozo/fable) -- Service dependency injection framework
+- [fable-serviceproviderbase](https://github.com/stevenvelozo/fable-serviceproviderbase) -- Service provider base class
+- [ultravisor](https://github.com/stevenvelozo/ultravisor) -- Process supervision and orchestration server
 
 ## License
 

@@ -8,7 +8,7 @@ Ultravisor Beacon is designed as a composable system of small, focused classes. 
 graph TD
     BS[BeaconService<br/><small>Fable service wrapper</small>]
     CM[CapabilityManager<br/><small>Host app capabilities</small>]
-    CA[CapabilityAdapter<br/><small>Descriptor → Provider bridge</small>]
+    CA[CapabilityAdapter<br/><small>Descriptor -> Provider bridge</small>]
     CS[ConnectivityHTTP<br/><small>Transport config</small>]
     BC[BeaconClient<br/><small>Thin client</small>]
     EX[Executor<br/><small>Work item router</small>]
@@ -55,7 +55,7 @@ graph TD
 
 ## Transport Flow
 
-The beacon automatically negotiates the best transport. No configuration is needed — the decision happens at runtime.
+The beacon automatically negotiates the best transport. No configuration is needed -- the decision happens at runtime.
 
 ```mermaid
 sequenceDiagram
@@ -84,7 +84,7 @@ sequenceDiagram
         B->>S: POST /Beacon/Work/{hash}/Complete
     end
 
-    Note over B: On disconnect: re-auth → try WS → fallback HTTP
+    Note over B: On disconnect: re-auth -> try WS -> fallback HTTP
 ```
 
 ### Reconnection Behavior
@@ -130,22 +130,22 @@ stateDiagram-v2
 
 When the Executor receives a work item:
 
-1. **Resolve** — `ProviderRegistry.resolve(Capability, Action)` finds the provider
-2. **Download** — If `SourceURL` is set, download the source file (with affinity caching)
-3. **Substitute** — Replace `{SourcePath}` and `{OutputPath}` in the command string
-4. **Execute** — Call `provider.execute(action, workItem, context, callback, progress)`
-5. **Collect** — If `OutputFilename` + `ReturnOutputAsBase64`, encode and attach output
-6. **Report** — Send completion/error/progress to the server (via WebSocket or HTTP)
+1. **Resolve** -- `ProviderRegistry.resolve(Capability, Action)` finds the provider
+2. **Download** -- If `SourceURL` is set, download the source file (with affinity caching)
+3. **Substitute** -- Replace `{SourcePath}` and `{OutputPath}` in the command string
+4. **Execute** -- Call `provider.execute(action, workItem, context, callback, progress)`
+5. **Collect** -- If `OutputFilename` + `ReturnOutputAsBase64`, encode and attach output
+6. **Report** -- Send completion/error/progress to the server (via WebSocket or HTTP)
 
 ### File Transfer and Affinity
 
 Work items can include file transfer directives:
 
-- **`SourceURL`** — URL to download before execution
-- **`SourceFilename`** — Local name for the downloaded file
-- **`OutputFilename`** — Expected output file to collect after execution
-- **`ReturnOutputAsBase64`** — Encode the output file into the result
-- **`AffinityKey`** — Cache downloaded files across work items with the same key
+- **`SourceURL`** -- URL to download before execution
+- **`SourceFilename`** -- Local name for the downloaded file
+- **`OutputFilename`** -- Expected output file to collect after execution
+- **`ReturnOutputAsBase64`** -- Encode the output file into the result
+- **`AffinityKey`** -- Cache downloaded files across work items with the same key
 
 Affinity directories (`affinity-{key}`) persist across work items, avoiding redundant downloads when the same source file is processed multiple times. Work directories (`work-{hash}`) are cleaned up after each work item completes. All affinity directories are cleaned at beacon shutdown.
 
@@ -161,6 +161,6 @@ The `ProviderRegistry` supports three provider source types:
 
 Provider exports can be:
 
-- **Class** — with `execute()` on the prototype → instantiated with config
-- **Factory function** — called with config → returns provider instance
-- **Pre-instantiated object** — with `execute()` method → registered directly
+- **Class** -- with `execute()` on the prototype -> instantiated with config
+- **Factory function** -- called with config -> returns provider instance
+- **Pre-instantiated object** -- with `execute()` method -> registered directly

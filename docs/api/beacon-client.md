@@ -18,7 +18,7 @@ let tmpClient = new libBeaconClient(pConfig);
 | `Name` | `string` | `'beacon-worker'` | Worker name |
 | `Password` | `string` | `''` | Authentication password |
 | `Capabilities` | `string[]` | `['Shell']` | Legacy: built-in provider names to load |
-| `Providers` | `object[]` | — | Provider descriptors: `[{ Source, Config }]` |
+| `Providers` | `object[]` | -- | Provider descriptors: `[{ Source, Config }]` |
 | `MaxConcurrent` | `number` | `1` | Max parallel work items |
 | `PollIntervalMs` | `number` | `5000` | HTTP poll frequency (ms) |
 | `HeartbeatIntervalMs` | `number` | `30000` | Heartbeat interval (ms) |
@@ -139,9 +139,9 @@ process.on('SIGTERM', function ()
 
 The client handles disconnection automatically:
 
-**HTTP transport** — On a `401 Unauthorized` response, the client re-authenticates, re-registers, and restarts polling.
+**HTTP transport** -- On a `401 Unauthorized` response, the client re-authenticates, re-registers, and restarts polling.
 
-**WebSocket transport** — On connection close, the client:
+**WebSocket transport** -- On connection close, the client:
 
 1. Re-authenticates (new session cookie)
 2. Tries WebSocket reconnection
@@ -156,7 +156,7 @@ No user intervention is needed. The beacon recovers silently.
 
 When connected via WebSocket, the client uses JSON messages:
 
-### Client → Server
+### Client -> Server
 
 | Action | Fields | Description |
 |--------|--------|-------------|
@@ -167,10 +167,10 @@ When connected via WebSocket, the client uses JSON messages:
 | `WorkProgress` | `WorkItemHash`, `ProgressData` | Report execution progress |
 | `Deregister` | `BeaconID` | Deregister before disconnect |
 
-### Server → Client
+### Server -> Client
 
 | EventType | Fields | Description |
 |-----------|--------|-------------|
 | `BeaconRegistered` | `BeaconID` | Registration confirmation |
 | `WorkItem` | `WorkItem` | Pushed work item to execute |
-| `Deregistered` | — | Server-initiated deregistration |
+| `Deregistered` | -- | Server-initiated deregistration |

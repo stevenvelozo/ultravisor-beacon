@@ -45,7 +45,7 @@ get actions()
 
 ### Returns
 
-`object` — Map of action name → action definition.
+`object` -- Map of action name -> action definition.
 
 ### Action Definition Shape
 
@@ -202,7 +202,7 @@ provider.getCapabilities()
 
 ### Returns
 
-`string[]` — Usually `[this.Capability]`. Override for multi-capability providers.
+`string[]` -- Usually `[this.Capability]`. Override for multi-capability providers.
 
 ---
 

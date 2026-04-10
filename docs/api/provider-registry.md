@@ -30,7 +30,7 @@ registry.registerProvider(pProvider)
 
 ### Returns
 
-`boolean` — `true` if registered successfully.
+`boolean` -- `true` if registered successfully.
 
 ### Description
 
@@ -100,7 +100,7 @@ registry.getCapabilities()
 
 ### Returns
 
-`string[]` — Copy of the aggregate capabilities array.
+`string[]` -- Copy of the aggregate capabilities array.
 
 ---
 
@@ -116,7 +116,7 @@ registry.getProviders()
 
 ### Returns
 
-`object` — Map of provider `Name` → provider instance.
+`object` -- Map of provider `Name` -> provider instance.
 
 ---
 
@@ -156,7 +156,7 @@ The loaded module can export:
 
 ### Returns
 
-`boolean` — `true` if loaded and registered successfully.
+`boolean` -- `true` if loaded and registered successfully.
 
 ### Example
 
@@ -186,7 +186,7 @@ registry.loadProviders(pDescriptors)
 
 ### Returns
 
-`number` — Count of successfully loaded providers.
+`number` -- Count of successfully loaded providers.
 
 ### Example
 

@@ -123,10 +123,10 @@ The provider module can export in three ways:
 
 ### Provider Lifecycle
 
-1. **`constructor(pConfig)`** — Receive per-provider configuration
-2. **`initialize(fCallback)`** — Async initialization (validate prerequisites, connect to services)
-3. **`execute(pAction, pWorkItem, pContext, fCallback, fReportProgress)`** — Handle work items
-4. **`shutdown(fCallback)`** — Clean up on beacon stop
+1. **`constructor(pConfig)`** -- Receive per-provider configuration
+2. **`initialize(fCallback)`** -- Async initialization (validate prerequisites, connect to services)
+3. **`execute(pAction, pWorkItem, pContext, fCallback, fReportProgress)`** -- Handle work items
+4. **`shutdown(fCallback)`** -- Clean up on beacon stop
 
 ### Result Convention
 

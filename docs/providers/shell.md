@@ -84,7 +84,7 @@ The Shell provider works seamlessly with the Executor's file transfer pipeline. 
 }
 ```
 
-The Executor downloads the source file, substitutes the paths, runs the command, and collects the output file — all transparently.
+The Executor downloads the source file, substitutes the paths, runs the command, and collects the output file -- all transparently.
 
 ## Notes
 

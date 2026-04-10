@@ -15,7 +15,7 @@ npm install ultravisor-beacon
 
 ## Scenario 1: Fable Service with Custom Capability
 
-Embed beacon functionality into an existing Fable application. The service manages the full lifecycle — authentication, registration, polling, and shutdown.
+Embed beacon functionality into an existing Fable application. The service manages the full lifecycle -- authentication, registration, polling, and shutdown.
 
 ```javascript
 const libFable = require('fable');
@@ -175,7 +175,7 @@ tmpClient.start(function (pError, pBeacon)
 | `Name` | `string` | `'beacon-worker'` | Worker name for registration |
 | `Password` | `string` | `''` | Authentication password |
 | `Capabilities` | `string[]` | `['Shell']` | Legacy: capability names to load as built-in providers |
-| `Providers` | `object[]` | — | Provider descriptors: `[{ Source, Config }]` |
+| `Providers` | `object[]` | -- | Provider descriptors: `[{ Source, Config }]` |
 | `MaxConcurrent` | `number` | `1` | Maximum parallel work items |
 | `PollIntervalMs` | `number` | `5000` | HTTP poll frequency (ms) |
 | `HeartbeatIntervalMs` | `number` | `30000` | Heartbeat interval (ms) |
@@ -185,6 +185,6 @@ tmpClient.start(function (pError, pBeacon)
 
 ## Next Steps
 
-- [Architecture](architecture.md) — Understand the component design
-- [Providers](providers/README.md) — Built-in providers and writing custom ones
-- [API Reference](api/README.md) — Complete method documentation
+- [Architecture](architecture.md) -- Understand the component design
+- [Providers](providers/README.md) -- Built-in providers and writing custom ones
+- [API Reference](api/README.md) -- Complete method documentation

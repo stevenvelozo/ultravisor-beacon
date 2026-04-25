@@ -99,7 +99,106 @@ class UltravisorBeaconService extends libFableServiceBase
 			this.log.info(`UltravisorBeacon: registered capability [${pDescriptor.Capability}]`);
 		}
 
+		// If the beacon is already enabled (i.e., capabilities are
+		// being registered AFTER initial connect — e.g. from the
+		// Readvertise hook in retold-labs-worker after a model push
+		// finalize), push the new capability into the live thin
+		// client's provider registry AND trigger a re-registration so
+		// the hub's view of this beacon's capability list updates.
+		// Without this, the worker holds the new handler locally but
+		// the hub never routes work to it because its registry still
+		// reflects the original enable() snapshot.
+		if (this._Enabled && this._ThinClient)
+		{
+			this._refreshThinClientCapabilities();
+		}
+
 		return this;
+	}
+
+	/**
+	 * Rebuild the thin client's provider registry from the current
+	 * CapabilityManager state and trigger a re-registration POST so
+	 * the hub's beacon record reflects any post-enable capability
+	 * changes.
+	 *
+	 * Called automatically after `registerCapability()` (when already
+	 * enabled) and `removeCapability()`. Callers can also invoke
+	 * directly when they've batch-mutated capabilities.
+	 */
+	_refreshThinClientCapabilities()
+	{
+		if (!this._ThinClient || !this._ThinClient._Executor
+			|| !this._ThinClient._Executor.providerRegistry)
+		{
+			return;
+		}
+
+		let tmpRegistry = this._ThinClient._Executor.providerRegistry;
+		let tmpAdapters = this._CapabilityManager.buildProviderDescriptors();
+
+		// Best-effort wipe + reload. Different registry versions expose
+		// different APIs (clear / removeAllProviders / iterate via
+		// getProviders + removeProvider). Try each in sequence.
+		try
+		{
+			if (typeof tmpRegistry.removeAllProviders === 'function')
+			{
+				tmpRegistry.removeAllProviders();
+			}
+			else if (typeof tmpRegistry.clear === 'function')
+			{
+				tmpRegistry.clear();
+			}
+			else if (typeof tmpRegistry.getCapabilityNames === 'function'
+				&& typeof tmpRegistry.removeProvider === 'function')
+			{
+				let tmpExisting = tmpRegistry.getCapabilityNames();
+				for (let tmpName of tmpExisting)
+				{
+					try { tmpRegistry.removeProvider(tmpName); } catch (e) {}
+				}
+			}
+		}
+		catch (pClearErr)
+		{
+			if (this.log) this.log.warn(
+				`UltravisorBeacon: capability re-load — failed to clear thin client registry: ${pClearErr.message}`);
+		}
+
+		for (let tmpAdapter of tmpAdapters)
+		{
+			try
+			{
+				tmpRegistry.registerProvider(tmpAdapter);
+				if (typeof tmpAdapter.initialize === 'function')
+				{
+					try { tmpAdapter.initialize(() => {}); } catch (e) {}
+				}
+			}
+			catch (pErr)
+			{
+				if (this.log) this.log.warn(
+					`UltravisorBeacon: failed to inject [${tmpAdapter.Capability || '?'}] into thin client: ${pErr.message}`);
+			}
+		}
+
+		if (typeof this._ThinClient.refreshRegistration === 'function')
+		{
+			this._ThinClient.refreshRegistration((pErr) =>
+			{
+				if (pErr && this.log)
+				{
+					this.log.warn(`UltravisorBeacon: refreshRegistration failed: ${pErr.message}`);
+				}
+				else if (this.log)
+				{
+					this.log.info(
+						`UltravisorBeacon: re-registered with hub — `
+						+ `capabilities now [${this._CapabilityManager.getCapabilityNames().join(', ')}]`);
+				}
+			});
+		}
 	}
 
 	/**

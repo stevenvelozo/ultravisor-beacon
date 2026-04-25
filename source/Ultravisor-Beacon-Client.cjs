@@ -409,6 +409,19 @@ class UltravisorBeaconClient
 	// Registration
 	// ================================================================
 
+	/**
+	 * Public re-registration entrypoint. Called by the parent service
+	 * after capabilities are added/removed post-enable() so the hub's
+	 * beacon record reflects the new capability list. Same payload as
+	 * the initial /Beacon/Register; the coordinator's registerBeacon
+	 * path is idempotent on (Name, BeaconID) and updates the existing
+	 * beacon's Capabilities + ActionSchemas in place.
+	 */
+	refreshRegistration(fCallback)
+	{
+		return this._register(fCallback || (() => {}));
+	}
+
 	_register(fCallback)
 	{
 		let tmpBody = {

@@ -27,6 +27,6 @@
 	},
 	"devDependencies": {
 		"pict-docuserve": "^0.1.5",
-		"quackage": "^1.1.0"
+		"quackage": "^1.1.2"
 	}
 }

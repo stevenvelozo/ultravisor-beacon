@@ -40,6 +40,13 @@ class UltravisorBeaconClient
 			ServerURL: 'http://localhost:54321',
 			Name: 'beacon-worker',
 			Password: '',
+			// JoinSecret — opaque token presented on BeaconRegister so
+			// ultravisor's optional non-promiscuous mode can validate
+			// the beacon's right to join the mesh. Empty string ('') is
+			// fine when ultravisor runs in default (promiscuous) mode.
+			// In non-promiscuous mode an empty/wrong secret is rejected
+			// at registration time.
+			JoinSecret: '',
 			Capabilities: ['Shell'],
 			MaxConcurrent: 1,
 			PollIntervalMs: 5000,
@@ -100,7 +107,42 @@ class UltravisorBeaconClient
 			});
 		}
 
-		let tmpCount = this._Executor.providerRegistry.loadProviders(tmpProviders);
+		// Two shapes are accepted in `Providers`:
+		//
+		//   1. Descriptor:  { Source: '<built-in name | path | npm pkg>', Config: {...} }
+		//      The registry resolves Source to a class and instantiates it. This is
+		//      what the existing config-file driven flow uses.
+		//
+		//   2. Pre-instantiated provider:  any object that already has .Capability +
+		//      .execute (i.e. extends UltravisorBeaconCapabilityProvider). Useful when
+		//      a wrapper module — like ultravisor-auth-beacon — needs to inject runtime
+		//      state into the provider before the beacon connects.
+		//
+		// We split the array, route descriptors through loadProviders (Source-based)
+		// and instances through registerProvider (instance-based). The combined count
+		// becomes the log line so the operator sees the same total either way.
+		let tmpDescriptors = [];
+		let tmpInstances = [];
+		for (let i = 0; i < tmpProviders.length; i++)
+		{
+			let tmpP = tmpProviders[i];
+			if (tmpP && typeof tmpP.Capability === 'string' && typeof tmpP.execute === 'function')
+			{
+				tmpInstances.push(tmpP);
+			}
+			else
+			{
+				tmpDescriptors.push(tmpP);
+			}
+		}
+		let tmpCount = this._Executor.providerRegistry.loadProviders(tmpDescriptors);
+		for (let i = 0; i < tmpInstances.length; i++)
+		{
+			if (this._Executor.providerRegistry.registerProvider(tmpInstances[i]))
+			{
+				tmpCount++;
+			}
+		}
 		this.log.info(`[Beacon] Loaded ${tmpCount} capability provider(s).`);
 	}
 
@@ -464,6 +506,14 @@ class UltravisorBeaconClient
 		// the same host directory get the same ID, while two unrelated /media
 		// directories on different machines get different IDs.
 		tmpBody.SharedMounts = this._normalizeSharedMounts(this._Config.SharedMounts);
+
+		// Optional join secret for ultravisor's non-promiscuous mode.
+		// Mirrors the WS register payload — only sent when configured so
+		// promiscuous-mode HTTP traffic is byte-identical to before.
+		if (this._Config.JoinSecret)
+		{
+			tmpBody.JoinSecret = this._Config.JoinSecret;
+		}
 
 		this._httpRequest('POST', '/Beacon/Register', tmpBody, fCallback);
 	}
@@ -833,6 +883,14 @@ class UltravisorBeaconClient
 				MaxConcurrent: this._Config.MaxConcurrent,
 				Tags: this._Config.Tags
 			};
+			// Optional join secret for non-promiscuous mode. Always sent
+			// when configured — ultravisor decides whether to consult it.
+			// Empty config = nothing on the wire (the field is omitted)
+			// to keep promiscuous-mode payloads exactly as before.
+			if (this._Config.JoinSecret)
+			{
+				tmpWSRegPayload.JoinSecret = this._Config.JoinSecret;
+			}
 			if (this._Config.Contexts && Object.keys(this._Config.Contexts).length > 0)
 			{
 				tmpWSRegPayload.Contexts = this._Config.Contexts;

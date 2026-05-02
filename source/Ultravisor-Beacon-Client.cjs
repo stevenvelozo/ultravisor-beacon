@@ -53,7 +53,14 @@ class UltravisorBeaconClient
 			HeartbeatIntervalMs: 30000,
 			ReconnectIntervalMs: 10000,
 			StagingPath: process.cwd(),
-			Tags: {}
+			Tags: {},
+			// Phase 4 — Pillar 3: when true, skip the WS attempt and
+			// connect via HTTP-poll only. Lets a synthetic-beacon-runner
+			// emulate firewall-restricted / IoT-style consumers that
+			// can't hold a WebSocket open. The fallback path the client
+			// already takes when libWebSocket is missing exercises this
+			// same code; ForceHTTPTransport just makes it deterministic.
+			ForceHTTPTransport: false
 		}, pConfig || {});
 
 		// Logger: use provided Fable log or fall back to console
@@ -180,6 +187,16 @@ class UltravisorBeaconClient
 				}
 
 				this.log.info(`[Beacon] Authenticated successfully.`);
+
+				// Phase 4 — Pillar 3: ForceHTTPTransport skips the WS
+				// attempt entirely. Used by polling-mode beacons that
+				// must run without holding a socket open.
+				if (this._Config.ForceHTTPTransport)
+				{
+					this.log.info(`[Beacon] ForceHTTPTransport=true; using HTTP polling.`);
+					this._UseWebSocket = false;
+					return this._startHTTP(fCallback);
+				}
 
 				// Try WebSocket first — if ws library is available and the
 				// server supports it, we get push-based work dispatch.

@@ -878,7 +878,16 @@ class UltravisorBeaconClient
 
 		try
 		{
-			this._WebSocket = new libWebSocket(tmpWSURL, { headers: tmpHeaders });
+			// maxPayload: a beacon's outbound work-item completion can include
+			// a large Result string (a typed-op State edge ships the records
+			// from one node to the next). At 250K rows that's 40-60 MB.
+			// `ws`'s default 100 MB inbound limit applies to the SERVER side
+			// (UV) — but the client also tracks payload size and aborts
+			// frame buffering when it sees a frame above that limit. Match
+			// UV's bumped limit so the client doesn't silently drop frames.
+			let tmpMaxPayloadMB = parseInt(process.env.UltravisorBeaconWebSocketMaxPayloadMB, 10);
+			if (!Number.isFinite(tmpMaxPayloadMB) || tmpMaxPayloadMB <= 0) tmpMaxPayloadMB = 256;
+			this._WebSocket = new libWebSocket(tmpWSURL, { headers: tmpHeaders, maxPayload: tmpMaxPayloadMB * 1024 * 1024 });
 		}
 		catch (pError)
 		{

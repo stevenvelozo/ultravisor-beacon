@@ -6,9 +6,9 @@ Providers implement capabilities that beacons advertise to the Ultravisor server
 
 | Provider | Capability | Actions | Description |
 |----------|------------|---------|-------------|
-| [Shell](providers/shell.md) | `Shell` | `Execute` | Run shell commands via `child_process.exec()` |
-| [FileSystem](providers/filesystem.md) | `FileSystem` | `Read`, `Write`, `List`, `Copy` | Local file operations with path restrictions |
-| [LLM](providers/llm.md) | `LLM` | `ChatCompletion`, `Embedding`, `ToolUse` | Multi-backend LLM API calls |
+| [Shell](shell.md) | `Shell` | `Execute` | Run shell commands via `child_process.exec()` |
+| [FileSystem](filesystem.md) | `FileSystem` | `Read`, `Write`, `List`, `Copy` | Local file operations with path restrictions |
+| [LLM](llm.md) | `LLM` | `ChatCompletion`, `Embedding`, `ToolUse` | Multi-backend LLM API calls |
 
 ## Loading Providers
 

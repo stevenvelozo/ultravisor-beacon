@@ -12,12 +12,12 @@ The default export is `UltravisorBeaconService`. Sub-components are available as
 
 | Export | Class | Description |
 |--------|-------|-------------|
-| *(default)* | [BeaconService](api/beacon-service.md) | Fable service wrapper |
-| `.BeaconClient` | [BeaconClient](api/beacon-client.md) | Thin client for standalone workers |
-| `.CapabilityManager` | [CapabilityManager](api/capability-manager.md) | Host app capability registry |
+| *(default)* | [BeaconService](beacon-service.md) | Fable service wrapper |
+| `.BeaconClient` | [BeaconClient](beacon-client.md) | Thin client for standalone workers |
+| `.CapabilityManager` | [CapabilityManager](capability-manager.md) | Host app capability registry |
 | `.CapabilityAdapter` | CapabilityAdapter | Descriptor-to-provider bridge |
-| `.CapabilityProvider` | [CapabilityProvider](api/capability-provider.md) | Base class for providers |
-| `.ProviderRegistry` | [ProviderRegistry](api/provider-registry.md) | Provider index and router |
+| `.CapabilityProvider` | [CapabilityProvider](capability-provider.md) | Base class for providers |
+| `.ProviderRegistry` | [ProviderRegistry](provider-registry.md) | Provider index and router |
 | `.ConnectivityHTTP` | ConnectivityHTTP | HTTP transport configuration |
 | `.ConnectivityWebSocket` | ConnectivityWebSocket | WebSocket transport configuration |
 

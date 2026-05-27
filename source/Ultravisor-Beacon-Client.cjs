@@ -39,6 +39,15 @@ class UltravisorBeaconClient
 		this._Config = Object.assign({
 			ServerURL: 'http://localhost:54321',
 			Name: 'beacon-worker',
+			// UserName — HTTP-auth identity for /1.0/Authenticate (gets
+			// the session cookie used by HTTP polling + any session-gated
+			// REST). Distinct from Name (the mesh handle UV uses for
+			// AffinityKey routing) because shared UVs (e.g. QA) require
+			// the auth-beacon to validate a REAL user account, and
+			// "beacon-worker" or "data-mapper" usually aren't. When
+			// unset (or empty), falls back to Name for backward compat
+			// with promiscuous-UV / solo-beacon deployments.
+			UserName: '',
 			Password: '',
 			// JoinSecret — opaque token presented on BeaconRegister so
 			// ultravisor's optional non-promiscuous mode can validate
@@ -331,8 +340,19 @@ class UltravisorBeaconClient
 
 	_authenticate(fCallback)
 	{
+		// Use the dedicated UserName when set; fall back to Name otherwise.
+		// Name is the mesh handle UV uses for AffinityKey routing, while
+		// UserName must match a registered account on the auth-beacon for
+		// /1.0/Authenticate to return a real session cookie. Most deploys
+		// use the same value for both; the split matters on shared UVs
+		// where beacon names are arbitrary handles like "data-mapper" and
+		// the auth-beacon's user accounts are operator emails / service-
+		// account IDs.
+		let tmpUserName = (typeof this._Config.UserName === 'string' && this._Config.UserName.length > 0)
+			? this._Config.UserName
+			: this._Config.Name;
 		let tmpBody = {
-			UserName: this._Config.Name,
+			UserName: tmpUserName,
 			Password: this._Config.Password || ''
 		};
 
@@ -384,7 +404,10 @@ class UltravisorBeaconClient
 				if (tmpParsed && tmpParsed.LoggedIn === false)
 				{
 					let tmpReason = tmpParsed.Error || 'auth-beacon rejected credentials';
-					this.log.warn(`[Beacon] HTTP auth rejected for [${this._Config.Name}] — ${tmpReason}. WS transport will still register via JoinSecret, but HTTP polling + any session-gated REST will 401. Register a user account on the auth-beacon for "${this._Config.Name}" (or supply matching --user creds) to fix.`);
+					let tmpHint = (this._Config.UserName && this._Config.UserName !== this._Config.Name)
+						? `Tried UserName="${tmpUserName}" (Beacon Name="${this._Config.Name}"). Verify the user account exists on the auth-beacon.`
+						: `Tried UserName="${tmpUserName}". Either register a user account with that name on the auth-beacon, OR set a separate UserName (--user / DATABEACON_BEACON_USER) pointing at an existing account — Name stays the mesh handle.`;
+					this.log.warn(`[Beacon] HTTP auth rejected — ${tmpReason} ${tmpHint} WS transport will still register via JoinSecret, but HTTP polling + any session-gated REST will 401.`);
 					// Still return success so the caller (which proceeds
 					// to _startWebSocket) keeps going. Empirically the
 					// WS path's JoinSecret auth is independent of the

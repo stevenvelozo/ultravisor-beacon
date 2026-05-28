@@ -17,6 +17,7 @@ class UltravisorBeaconConnectivityHTTP
 	{
 		this._Options = Object.assign({
 			ServerURL: 'http://localhost:54321',
+			UserName: '',
 			Password: '',
 			PollIntervalMs: 5000,
 			HeartbeatIntervalMs: 30000
@@ -32,6 +33,7 @@ class UltravisorBeaconConnectivityHTTP
 	{
 		return {
 			ServerURL: this._Options.ServerURL,
+			UserName: this._Options.UserName,
 			Password: this._Options.Password,
 			PollIntervalMs: this._Options.PollIntervalMs,
 			HeartbeatIntervalMs: this._Options.HeartbeatIntervalMs

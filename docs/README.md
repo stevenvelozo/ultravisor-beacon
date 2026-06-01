@@ -95,4 +95,4 @@ The coordinator does not track transport type. It checks for a live WebSocket wh
 
 - [fable](https://github.com/stevenvelozo/fable) -- Service dependency injection framework
 - [fable-serviceproviderbase](https://github.com/stevenvelozo/fable-serviceproviderbase) -- Service provider base class
-- [ultravisor](https://github.com/stevenvelozo/ultravisor) -- Process supervision and orchestration server
+- [ultravisor](https://stevenvelozo.github.io/ultravisor/) -- Process supervision and orchestration server

@@ -1,6 +1,8 @@
 Ultravisor Beacon
 =================
 
+> **[Read the Ultravisor Beacon Documentation](https://stevenvelozo.github.io/ultravisor-beacon/)**
+
 A lightweight beacon client and Fable service for remote task execution. Ultravisor Beacon turns any Node.js application into a distributed worker node that connects to an Ultravisor server, advertises capabilities, and executes work items on demand.
 
 ## Features

@@ -23,18 +23,8 @@ The default export is `UltravisorBeaconService`. Sub-components are available as
 
 ## Class Hierarchy
 
-```
-UltravisorBeaconService (extends FableServiceProviderBase)
-├── CapabilityManager
-├── ConnectivityHTTP
-└── BeaconClient
-    └── Executor
-        └── ProviderRegistry
-            ├── Shell (extends CapabilityProvider)
-            ├── FileSystem (extends CapabilityProvider)
-            ├── LLM (extends CapabilityProvider)
-            └── CapabilityAdapter (extends CapabilityProvider)
-```
+<!-- bespoke diagram: edit diagrams/class-hierarchy.mmd or .hints.json, then: npx pict-renderer-graph build modules/fable/ultravisor-beacon/docs/api -->
+![Class Hierarchy](diagrams/class-hierarchy.svg)
 
 ## Common Patterns
 
